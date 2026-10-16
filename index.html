@@ -1,0 +1,585 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>한반도 한 바퀴</title>
+<style>
+:root{--paper:#f7f1e3;--ink:#1f2d3d;--navy:#1f3a5f;--red:#c0392b;--line:#d9ccb0;--card:#fffdf6}
+*{box-sizing:border-box}body{margin:0;font-family:'Pretendard','Malgun Gothic',system-ui,sans-serif;background:var(--paper);color:var(--ink)}
+.hide{display:none!important}button{font:inherit;cursor:pointer;border:0;border-radius:10px;padding:10px 16px;background:var(--navy);color:#fff;font-weight:700}
+button:disabled{opacity:.4;cursor:not-allowed}button.sub{background:#fff;color:var(--navy);border:2px solid var(--navy)}button.red{background:var(--red)}
+input,textarea,select{font:inherit;padding:10px;border:2px solid var(--line);border-radius:10px;background:#fff;width:100%}
+.center{max-width:720px;margin:0 auto;padding:32px 16px;text-align:center}
+.stamp{display:inline-block;border:3px double var(--red);color:var(--red);padding:2px 12px;border-radius:6px;transform:rotate(-3deg);font-weight:800;letter-spacing:2px}
+h1{font-size:44px;margin:12px 0 4px;color:var(--navy)}.subt{color:#5b6b7b;margin-bottom:24px}
+.rooms{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:14px}
+.room{background:var(--card);border:2px solid var(--navy);padding:16px 8px;border-radius:14px;color:var(--ink);box-shadow:3px 3px 0 var(--navy)}
+.room small{display:block;font-weight:500;margin-top:4px}.room.full{opacity:.45}
+.panel{background:var(--card);border:2px solid var(--line);border-radius:14px;padding:12px}
+.plist .pl{display:flex;align-items:center;gap:8px;padding:8px;border-bottom:1px dashed var(--line);text-align:left}
+.dot{width:18px;height:18px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px #0004;flex:none;display:inline-block}
+#game{display:grid;grid-template-columns:230px minmax(0,1fr) 250px;grid-template-rows:auto 1fr 150px;gap:10px;padding:10px;height:100vh}
+#top{grid-column:1/4;display:flex;justify-content:space-between;align-items:center;background:var(--navy);color:#fff;border-radius:14px;padding:8px 16px;gap:8px;flex-wrap:wrap}
+#top b{font-size:20px}#left{overflow:auto}#right{overflow:auto;display:flex;flex-direction:column;gap:8px}#logp{grid-column:1/4;overflow:auto;font-size:13px}
+#boardwrap{display:flex;align-items:center;justify-content:center;min-height:0}
+#board{display:grid;grid-template-columns:1.5fr repeat(9,1fr) 1.5fr;grid-template-rows:1.5fr repeat(9,1fr) 1.5fr;gap:2px;background:var(--line);border:4px solid var(--navy);border-radius:10px;height:min(100%,calc(100vw - 520px));aspect-ratio:1;max-width:100%}
+.tile{background:var(--card);position:relative;display:flex;flex-direction:column;font-size:clamp(8px,1vw,12px);padding:2px;overflow:hidden;cursor:pointer;text-align:center;line-height:1.15}
+.tile .band{height:6px;margin:-2px -2px 2px}.tile .no{position:absolute;right:3px;top:8px;opacity:.45;font-size:.8em}
+.tile .nm{font-weight:800;margin-top:6px}.tile .ty{opacity:.65;font-size:.85em}.tile .pr{font-weight:700;color:var(--navy)}
+.tile .ow{margin-top:auto;font-size:.85em;font-weight:700;border-radius:4px;color:#fff;padding:1px}.tile .tk{display:flex;flex-wrap:wrap;justify-content:center;gap:1px;min-height:14px}
+.tile .tk .dot{width:13px;height:13px}.tile.sp{background:#fdf2d0}.tile.cur{outline:4px solid var(--red);outline-offset:-4px;z-index:2}.tile.pick{animation:pk 1s infinite}
+@keyframes pk{50%{background:#ffe08a}}
+.tag{font-size:.75em;padding:0 4px;border-radius:4px;color:#fff;margin-left:2px}.tag.n{background:#c0392b}.tag.s{background:#2471a3}
+#mid{grid-area:2/2/11/11;display:flex;flex-direction:column;align-items:center;justify-content:center;background:radial-gradient(circle,#fff8e1,#f1e6c6);text-align:center;padding:8px}
+#mid .big{font-size:clamp(18px,3vw,38px);font-weight:900;color:var(--navy)}
+.die{display:inline-flex;width:54px;height:54px;border-radius:12px;background:#fff;border:3px solid var(--navy);align-items:center;justify-content:center;font-size:30px;font-weight:900;margin:4px}.die.roll{animation:sh .15s infinite}
+@keyframes sh{25%{transform:rotate(-12deg)}75%{transform:rotate(12deg)}}
+#turn{font-weight:800;font-size:16px;padding:10px;border-radius:12px;background:#fff;border:2px solid var(--navy)}
+.pcard{padding:8px;border-radius:10px;border:2px solid var(--line);margin-bottom:6px;background:#fff;font-size:14px}.pcard.cur{border-color:var(--red);background:#fff4f2}.pcard.dead{opacity:.45}
+#modal{position:fixed;inset:0;background:#0007;display:flex;align-items:center;justify-content:center;z-index:50;padding:12px}
+.mbox{background:var(--card);border-radius:18px;padding:22px;max-width:460px;width:100%;max-height:92vh;overflow:auto;text-align:center;animation:pop .35s}
+.mbox.card{border:5px solid var(--navy)}.mbox.card.c{border-color:var(--red)}.mbox.card.p{border-color:#2a9d4a}
+@keyframes pop{from{transform:scale(.3) rotate(-8deg);opacity:0}}
+.row{display:flex;gap:8px;justify-content:center;margin-top:12px;flex-wrap:wrap}
+#toast{position:fixed;top:14px;left:50%;transform:translateX(-50%);background:var(--red);color:#fff;padding:10px 18px;border-radius:12px;z-index:99;font-weight:700}
+.tbl{width:100%;border-collapse:collapse;text-align:left}.tbl td,.tbl th{padding:6px;border-bottom:1px solid var(--line)}
+@media(max-width:900px){#game{grid-template-columns:1fr;height:auto}#top,#logp{grid-column:1}#board{height:auto;width:100%}}
+</style><link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Jua&family=Gaegu:wght@400;700&display=swap" rel="stylesheet">
+<style id="crayon">
+:root{--paper:#fffbea;--ink:#3a2e24;--navy:#2f6fed;--red:#ff5a5f;--line:#3a2e24;--card:#fffef6;--ol:#3a2e24}
+body{font-family:'Jua','Gaegu','Comic Sans MS','Malgun Gothic',cursive;font-size:17px;background-color:#fffbea;
+ background-image:repeating-linear-gradient(105deg,#ffe9a833 0 14px,#fff0 14px 30px),repeating-linear-gradient(75deg,#bfe3ff33 0 18px,#fff0 18px 44px)}
+h1{font-size:58px;color:#ff5a5f;text-shadow:3px 3px 0 #ffd23f,5px 5px 0 #3a2e24;letter-spacing:2px;transform:rotate(-2deg)}
+.subt{color:#3a2e24;font-size:20px}
+button{border:3px solid var(--ol);border-radius:255px 18px 225px 18px/18px 225px 18px 255px;background:#4cc36b;color:#fff;text-shadow:1px 1px 0 #0003;box-shadow:3px 4px 0 var(--ol);font-family:inherit;font-size:17px;transition:transform .1s}
+button:hover:not(:disabled){transform:translate(-1px,-2px) rotate(-1deg)}button:active:not(:disabled){transform:translate(2px,3px);box-shadow:1px 1px 0 var(--ol)}
+button.sub{background:#fff;color:var(--ol);text-shadow:none;border:3px solid var(--ol)}button.red{background:#ff5a5f}
+input,textarea,select{border:3px solid var(--ol);border-radius:18px 8px 16px 8px;font-family:inherit;font-size:17px;background:#fffef6}
+.panel,.mbox,.room,#turn,.pcard{border:3px solid var(--ol)!important;border-radius:22px 10px 20px 12px/12px 20px 10px 22px!important;background:var(--card);box-shadow:4px 5px 0 #3a2e2433}
+.room{box-shadow:4px 5px 0 var(--ol);color:var(--ink);background:#fff}.room:nth-child(6n+1){background:#ffd6d6}.room:nth-child(6n+2){background:#d6e8ff}.room:nth-child(6n+3){background:#d9f5df}
+.room:nth-child(6n+4){background:#fff1b8}.room:nth-child(6n+5){background:#ead9ff}.room:nth-child(6n){background:#ffd9ec}
+.stamp{border:4px double #ff5a5f;color:#ff5a5f;background:#fff;font-size:18px}
+#top{background:#2f6fed;border:3px solid var(--ol);border-radius:22px 10px 20px 12px;box-shadow:4px 5px 0 var(--ol)}
+#board{background:#3a2e24;border:5px solid #3a2e24;border-radius:24px;gap:3px;box-shadow:6px 7px 0 #3a2e2455;padding:0}
+.tile{background:#fffef6;border-radius:6px;font-family:inherit}.tile .nm{font-weight:400;font-size:1.15em}.tile.sp{background:#fff3b0}
+.tile .band{height:9px;border-bottom:2px solid #3a2e24}.tile .ow{border:2px solid #3a2e24;border-radius:8px;text-shadow:1px 1px 0 #0004}
+.tile .tk .dot{width:16px;height:16px;border:2px solid #3a2e24}.dot{border:2px solid #3a2e24;box-shadow:none}
+.tile.cur{outline:5px dashed #ff5a5f;outline-offset:-5px}
+#mid{background:radial-gradient(circle at 30% 30%,#fff7c2,#cdeeff 60%,#c8f2cf);border-radius:20px}
+#mid .big{font-weight:400;color:#ff5a5f;text-shadow:3px 3px 0 #ffd23f,5px 5px 0 #3a2e24;transform:rotate(-4deg);line-height:1.1}
+.die{border:4px solid var(--ol);border-radius:16px 8px 14px 8px;box-shadow:3px 4px 0 var(--ol);color:#ff5a5f;font-family:inherit}
+.pcard.cur{background:#ffe1e1}.tag{border:1.5px solid #3a2e24}.tbl td,.tbl th{border-bottom:2px dashed #3a2e2455}
+#toast{border:3px solid var(--ol);border-radius:18px 8px 16px 8px;box-shadow:3px 4px 0 var(--ol)}
+.mbox.card{border-width:6px!important}
+#neterr{background:#ffe1e1;border:3px dashed #ff5a5f;border-radius:16px;padding:14px;margin:14px 0;text-align:left;line-height:1.6}
+#neterr code{background:#fff;border:2px solid #3a2e24;border-radius:6px;padding:1px 6px}
+.wob{filter:url(#rough)}
+</style>
+<style>
+.bld{font-size:clamp(11px,1.7vw,22px);line-height:1;min-height:1.1em;filter:none}
+.bld.land{font-size:clamp(16px,2.8vw,36px);filter:drop-shadow(0 0 5px #ffd23f)}
+.bld.pop{animation:bpop .7s cubic-bezier(.3,1.6,.5,1)}
+@keyframes bpop{0%{transform:scale(0) translateY(-30px) rotate(-30deg);opacity:0}100%{transform:scale(1)}}
+.tile:not(.sp) .ty{display:none}
+.tile.built{box-shadow:inset 0 0 0 3px #ffd23f}
+</style><style id="bigtext">
+#game{grid-template-columns:290px minmax(0,1fr) 250px;grid-template-rows:auto minmax(0,1fr)}
+#boardwrap{min-height:0;overflow:auto}
+#board{height:auto;max-width:none;aspect-ratio:1;width:min(100%,calc(100vh - 100px),calc(100vw - 620px));container-type:inline-size}
+.tile{font-size:calc(100cqw/54);line-height:1.12;padding:.25em}
+.tile .nm{font-size:1.15em;margin-top:.55em}.tile .pr{font-size:1.05em}.tile .no{font-size:.85em;top:.7em}
+.tile .band{height:.5em}
+.tile .bld{font-size:1.6em;line-height:1;min-height:0;margin-top:.1em}.tile .bld.land{font-size:2.2em}
+.tile .ow{position:absolute;left:0;right:0;bottom:0;margin:0;font-size:.9em;padding:.1em .2em;border-radius:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tile .tk{position:absolute;left:0;right:0;bottom:1.6em;min-height:0}.tile .tk .dot{width:1.6em;height:1.6em}
+#midinfo{font-size:clamp(14px,1.5vw,21px)}
+.lastmsg{margin:8px auto 0;max-width:92%;background:#fff;border:3px solid #3a2e24;border-radius:14px;padding:6px 12px;font-size:.85em}
+.pcards{margin-top:8px}.pcard .pn{font-size:18px}.pcard .cash{font-size:22px;color:#2f6fed;margin:2px 0}
+.chips{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}.chip{border:2px solid #3a2e24;border-radius:10px;padding:1px 7px;font-size:15px}.none{opacity:.5}.st{font-size:14px}
+@media(max-width:900px){#game{grid-template-rows:none;height:auto}#boardwrap{justify-content:flex-start;align-items:flex-start}#board{width:max(100%,780px)}.pcards{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:6px}}
+#board{position:relative}.tile .tk{display:none}
+.pawn{position:absolute;z-index:6;border:3px solid #3a2e24;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:900;text-shadow:1px 1px 0 #0006;pointer-events:none;box-shadow:2px 3px 0 #3a2e2466;transition:left .15s linear,top .15s linear}
+.pawn.hop{animation:hop .15s ease-out}@keyframes hop{50%{transform:translateY(-45%) scale(1.25)}}
+.pawn.me{outline:3px dashed #ff5a5f;outline-offset:2px}
+.roomcard{display:flex;flex-direction:column;gap:6px}.tiny{padding:4px 10px;font-size:14px}.roomcard .room{width:100%}.roomcard:nth-child(6n+1) .room{background:#ffd6d6}.roomcard:nth-child(6n+2) .room{background:#d6e8ff}.roomcard:nth-child(6n+3) .room{background:#d9f5df}.roomcard:nth-child(6n+4) .room{background:#fff1b8}.roomcard:nth-child(6n+5) .room{background:#ead9ff}.roomcard:nth-child(6n) .room{background:#ffd9ec}
+</style>
+</head><body>
+<svg width="0" height="0" style="position:absolute"><filter id="rough"><feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="2" seed="3" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="3.5"/></filter></svg>
+<div id="home" class="center">
+ <span class="stamp">KOREAN PENINSULA · 여행 스탬프</span>
+ <h1>🗺 한반도 한 바퀴</h1><div class="subt">한반도를 돌며 지역을 사고, 교류하고, 긴장 속에서 살아남아라!</div>
+ <div class="panel"><label><b>닉네임</b> (8자 이내)</label><input id="nick" maxlength="8" placeholder="예: 민준"></div>
+ <div id="neterr" class="hide"></div><h3>방 선택 <small style="font-weight:400">(한 기기에서 친구들과 돌아가며 해요)</small></h3><div class="rooms" id="rooms"></div><div class="row"><button class="sub tiny" onclick="askResetAll()">🗑 모든 방 비우기</button></div>
+</div>
+<div id="lobby" class="center hide"></div>
+<div id="game" class="hide">
+ <div id="top"></div><div id="left" class="panel"></div>
+ <div id="boardwrap"><div id="board"></div></div>
+ <div id="right"></div>
+</div>
+<div id="modal" class="hide"></div><div id="toast" class="hide"></div>
+<script>
+(function(){
+const __dirname='';
+const path={join:(...a)=>a.join('/')};
+const crypto={randomBytes:n=>({toString:()=>Array.from({length:n},()=>Math.floor(Math.random()*256).toString(16).padStart(2,'0')).join('')})};
+const fs={readFileSync(){const v=localStorage.getItem('kb_rooms');if(!v)throw new Error('none');return v},mkdirSync(){},
+ appendFileSync(p,l){try{const a=JSON.parse(localStorage.getItem('kb_refl')||'[]');a.push(JSON.parse(l));localStorage.setItem('kb_refl',JSON.stringify(a))}catch(e){}}};
+// 「한반도 한 바퀴」 서버 — 외부 패키지 없이 Node.js(18+)만으로 동작합니다.
+// 실행: node server.js   (교사 비밀번호 변경: TEACHER_PW=내비번 node server.js)
+const PW = '', GAME_SEC = 30 * 60, DATA = '';
+const COLORS = [['#e63946', '빨강'], ['#1d70e0', '파랑'], ['#2a9d4a', '초록'], ['#f4a300', '노랑'], ['#8e44ad', '보라'], ['#ff6f91', '분홍']];
+
+// ───────── 보드 데이터 ─────────
+const NAMES = "출발! 한반도 한 바퀴,서울,한반도 열쇠,개성,인천,남북 철도,평양,한반도 열쇠,대전,부산,잠시 쉬어가기,원산,대구,남북 문화교류,제주,금강산,한반도 열쇠,함흥,광주,이산가족 상봉,무료 휴식,청진,신의주,한반도 열쇠,남포,DMZ,울산,경주,한반도 긴장,판문점,독도,한반도 열쇠,백두산,강릉,남북 스포츠 교류,목포,한반도 열쇠,세종,한반도 긴장,두만강".split(',');
+const SPECIAL = { '출발! 한반도 한 바퀴': 'start', '한반도 열쇠': 'key', '남북 철도': 'rail', '잠시 쉬어가기': 'rest', '무료 휴식': 'rest', '남북 문화교류': 'culture', '이산가족 상봉': 'family', 'DMZ': 'dmz', '판문점': 'pmj', '남북 스포츠 교류': 'sports', '한반도 긴장': 'tension' };
+const TIERS = { 500: ['목포', '강릉', '청진'], 700: ['경주', '울산', '신의주', '남포', '두만강'], 1000: ['대전', '대구', '광주', '원산', '함흥', '개성'], 1400: ['인천', '부산', '제주', '금강산', '세종'], 1800: ['서울', '평양', '백두산', '독도'] };
+const BUILD = { 500: [100, 100, 100, 200], 700: [150, 150, 150, 250], 1000: [200, 200, 200, 400], 1400: [250, 250, 250, 500], 1800: [300, 300, 300, 600] };
+const TOLL = { 500: [50, 100, 200, 300, 500], 700: [70, 150, 300, 450, 700], 1000: [100, 200, 400, 600, 1000], 1400: [140, 280, 560, 840, 1400], 1800: [180, 360, 720, 1080, 1800] };
+const GROUPS = [['목포', '강릉', '청진'], ['경주', '울산', '신의주', '두만강'], ['대전', '대구', '광주'], ['개성', '원산', '함흥'], ['인천', '부산', '제주'], ['금강산', '남포', '세종'], ['서울', '평양'], ['백두산', '독도']];
+const NORTH = ['개성', '평양', '원산', '함흥', '청진', '신의주', '남포', '금강산', '백두산', '두만강'];
+const INFO = { 서울: '대한민국의 수도이자 정치·경제·문화의 중심지입니다.', 개성: '고려의 수도였던 역사적인 도시로 남북 교류와 관련해서도 중요한 의미를 지닙니다.', 인천: '서해에 위치한 항구도시로 국제공항과 항만이 발달해 있습니다.', 평양: '북한의 수도로 정치·행정·문화의 중심지입니다.', 대전: '과학기술과 연구기관이 모여 있는 도시입니다.', 부산: '우리나라 대표적인 항구도시이자 국제적인 해양도시입니다.', 원산: '북한의 동해안에 위치한 항구도시입니다.', 대구: '우리나라의 대표적인 내륙 도시 중 하나입니다.', 제주: '독특한 자연환경과 문화를 가진 섬 지역입니다.', 금강산: '한반도의 대표적인 명산으로 아름다운 자연경관으로 잘 알려져 있습니다.', 함흥: '북한 동북부에 위치한 도시입니다.', 광주: '문화와 민주주의의 역사적 의미가 있는 도시입니다.', 청진: '북한 동북부에 위치한 항구도시입니다.', 신의주: '압록강을 사이에 두고 중국과 마주한 국경도시입니다.', 남포: '대동강 하구에 위치한 항구도시입니다.', 울산: '자동차·조선·석유화학 산업 등이 발달한 산업도시입니다.', 경주: '신라의 역사와 문화유산이 많이 남아 있는 도시입니다.', 독도: '대한민국의 동쪽 바다에 위치한 섬입니다.', 백두산: '한반도에서 가장 높은 산으로 남북한 모두에게 중요한 상징성을 지닌 산입니다.', 강릉: '동해안에 위치한 도시입니다.', 목포: '서남해안에 위치한 항구도시입니다.', 세종: '대한민국의 행정 기능이 집중된 도시입니다.', 두만강: '한반도 북동부를 흐르는 강으로 중국·러시아와 접하는 지역과 연결됩니다.' };
+const T = NAMES.map((name, i) => {
+  const t = { i, name, type: SPECIAL[name] || 'city' };
+  if (t.type === 'city') {
+    t.price = +Object.keys(TIERS).find(k => TIERS[k].includes(name));
+    t.grp = GROUPS.findIndex(g => g.includes(name));
+    t.tag = NORTH.includes(name) ? '북' : '남';
+    t.info = INFO[name]; t.bc = BUILD[t.price]; t.tl = TOLL[t.price];
+  }
+  return t;
+});
+
+// ───────── 한반도 열쇠 카드 (30장: 갈등 15 / 교류 15) ─────────
+const C = [
+  { k: 'c', i: '🎈', n: '오물풍선 살포', pay: 100, t: 1 }, { k: 'c', i: '🚀', n: '미사일 도발', pay: 150, t: 1 },
+  { k: 'c', i: '🌊', n: '서해 긴장 고조', f: 'tollCut', t: 1, d: '다음 통행료 수입 50% 감소' }, { k: 'c', i: '🧊', n: '남북 관계 경색', f: 'skip', d: '다음 차례 이동 불가' },
+  { k: 'c', i: '💥', n: '군사적 충돌', pay: 200, t: 2 }, { k: 'c', i: '📢', n: '긴급 속보', all: 50, t: 1 },
+  { k: 'c', i: '⛔', n: '교류 사업 중단', f: 'exVoid', d: '다음 교류 보상 무효' }, { k: 'c', i: '🪖', n: '접경지역 긴장', pay: 100 },
+  { k: 'c', i: '⚠️', n: '군사적 긴장 지속', t: 1 }, { k: 'c', i: '📵', n: '남북 연락 중단', f: 'tradeBan', d: '다음 차례까지 거래 불가' },
+  { k: 'c', i: '📅', n: '교류 계획 연기', f: 'exHalf', d: '다음 교류 보상 50% 감소' }, { k: 'c', i: '🚧', n: '접경지역 통행 제한', f: 'dice2', d: '다음 주사위 결과 -2' },
+  { k: 'c', i: '🔥', n: '군사적 긴장 확대', pay: 100, t: 1 }, { k: 'c', i: '⚡', n: '긴장 고조', f: 'dice2', d: '다음 턴 이동거리 -2' },
+  { k: 'c', i: '🆘', n: '한반도 긴급 상황', pay: 200, t: 2 },
+  { k: 'p', i: '🤝', n: '남북 회담 개최', gain: 100, t: -1 }, { k: 'p', i: '🚆', n: '남북 철도 연결 논의', gain: 150, t: -1 },
+  { k: 'p', i: '👨‍👩‍👧', n: '이산가족 상봉', gain: 100, t: -1 }, { k: 'p', i: '🎭', n: '남북 문화교류', gain: 100, t: -1 },
+  { k: 'p', i: '⚽', n: '남북 스포츠 교류', gain: 100, again: 1, d: '한 번 더 주사위' }, { k: 'p', i: '🧭', n: '공동 역사 탐방', mv: 'tour', d: '원하는 지역으로 이동' },
+  { k: 'p', i: '🧳', n: '관광 교류 재개', gain: 200 }, { k: 'p', i: '🕊', n: '평화의 메시지', t: -1 },
+  { k: 'p', i: '🏯', n: '공동 문화유산', gain: 100 }, { k: 'p', i: '🎓', n: '남북 청소년 교류', gain: 150 },
+  { k: 'p', i: '🎤', n: '공동 공연', gain: 100 }, { k: 'p', i: '📈', n: '교류 확대', mv: 'double', d: '원하는 자신의 지역 다음 통행료 2배' },
+  { k: 'p', i: '🌤', n: '긴장 완화', t: -1 }, { k: 'p', i: '💬', n: '대화의 시작', gain: 100, f: 'tradeOk', d: '원하는 플레이어와 거래 가능' },
+  { k: 'p', i: '🌈', n: '한반도에 평화가 찾아오다', gain: 200, t: -2 }
+];
+const TEVENTS = [['🎈', '오물풍선 살포', 1], ['🚀', '미사일 도발', 1], ['🌊', '서해 긴장 고조', 1], ['💥', '군사적 충돌', 2]];
+
+// ───────── 방 / 상태 ─────────
+const shuffle = a => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const newRoom = id => ({ id, status: 'lobby', paused: false, players: [], own: Array(40).fill(null), turn: 0, phase: 'roll', pending: null, trade: null, tension: 2, maxT: 2, tHist: [{ t: 2, why: '시작', at: Date.now() }], log: [], left: GAME_SEC, total: GAME_SEC, dice: { a: 1, b: 1, seq: 0 }, deck: [], nid: 1, results: null });
+let rooms = {}; for (let i = 1; i <= 6; i++) rooms[i] = newRoom(i);
+try { const s = JSON.parse(fs.readFileSync(path.join(DATA, 'state.json'), 'utf8')); for (const k in s) if (rooms[k]) { rooms[k] = s[k]; rooms[k].players.forEach(p => p.conn = 0); } } catch (e) { }
+let dirty = false;
+const cur = r => r.players[r.turn];
+const byId = (r, id) => r.players.find(p => p.id === id);
+const alive = r => r.players.filter(p => p.alive);
+const log = (r, m) => { r.log.push({ m, at: Date.now() }); if (r.log.length > 100) r.log.shift(); };
+const invest = (i, o) => o ? BUILD[T[i].price].slice(0, o.lv).reduce((a, b) => a + b, 0) : 0;
+const assets = (r, p) => p.cash + r.own.reduce((s, o, i) => s + (o && o.o === p.id ? T[i].price + invest(i, o) / 2 : 0), 0);
+const myTiles = (r, p) => r.own.map((o, i) => o && o.o === p.id ? i : -1).filter(i => i >= 0);
+
+function setT(r, d, why) {
+  const from = r.tension; let v = Math.max(0, Math.min(5, from + d));
+  if (v === from) return;
+  r.maxT = Math.max(r.maxT, v);
+  log(r, `${why}! 한반도 긴장도가 ${v}으로 ${d > 0 ? '상승' : '하락'}했습니다.`);
+  r.tHist.push({ t: v, why, at: Date.now() });
+  if (v >= 5) {
+    log(r, '🚨 긴급 상황! 모든 플레이어가 100만 원을 지불합니다. 긴장도는 3으로 조정됩니다.');
+    alive(r).forEach(p => pay(r, p, 100)); v = 3; r.tHist.push({ t: 3, why: '긴급 상황 후 조정', at: Date.now() });
+  }
+  r.tension = v;
+}
+function pay(r, p, amt, to) {
+  if (amt <= 0) return true;
+  if (p.cash >= amt) { p.cash -= amt; if (to) to.cash += amt; return true; }
+  if (to) to.cash += p.cash; p.cash = 0; bankrupt(r, p, to); return false;
+}
+function bankrupt(r, p, to) {
+  p.alive = false; p.pos = -1; p.extra = false;
+  r.own.forEach((o, i) => { if (o && o.o === p.id) r.own[i] = null; });
+  if (r.trade && (r.trade.from === p.id || r.trade.to === p.id)) r.trade = null;
+  log(r, `💸 ${p.name}이(가) 파산했습니다. 보유 지역과 건물은 은행으로 돌아갑니다.`);
+  checkEnd(r);
+}
+function checkEnd(r) { if (r.status === 'playing' && alive(r).length <= 1) finish(r, '한 명을 제외한 모든 플레이어가 파산했습니다.'); }
+function finish(r, why) {
+  if (r.status === 'ended') return;
+  r.status = 'ended'; r.pending = null; r.phase = 'end'; r.trade = null;
+  r.results = r.players.map(p => ({ id: p.id, name: p.name, color: p.color, alive: p.alive, total: p.alive ? Math.round(assets(r, p)) : 0, tiles: p.alive ? myTiles(r, p).length : 0 })).sort((a, b) => b.total - a.total);
+  log(r, `🏆 게임 종료! ${why || ''}`);
+}
+function nextTurn(r) {
+  for (let n = 0; n < 12; n++) {
+    r.turn = (r.turn + 1) % r.players.length; const p = cur(r);
+    if (!p.alive) continue;
+    p.tradeBan = false;
+    if (p.skip) { p.skip = false; log(r, `🧊 ${p.name}은(는) 이번 차례를 쉽니다.`); continue; }
+    break;
+  }
+  r.phase = 'roll'; r.pending = null;
+}
+function settle(r) { r.pending = null; if (!cur(r).alive) nextTurn(r); else r.phase = 'after'; checkEnd(r); }
+function exch(r, p, amt, peace, special) {
+  if (p.exVoid) { p.exVoid = false; log(r, `${p.name}의 교류 보상이 무효가 되었습니다.`); return 0; }
+  if (p.exHalf) { p.exHalf = false; amt /= 2; }
+  if (peace && r.tension <= 1) amt *= 1.5;
+  if (special && r.tension >= 4) amt /= 2;
+  return Math.round(amt);
+}
+function tollOf(r, i) {
+  const o = r.own[i], t = T[i]; let v = t.tl[o.lv];
+  if (GROUPS[t.grp].every(n => { const k = NAMES.indexOf(n); return r.own[k] && r.own[k].o === o.o; })) v *= 2;
+  if (o.x2) { v *= 2; o.x2 = false; }
+  return v;
+}
+function moveTo(r, p, to) { if (to < p.pos || to === 0) { p.cash += 300; log(r, `🏁 ${p.name} 출발점 통과! 300만 원을 받았습니다.`); } p.pos = to; land(r, p); }
+function land(r, p) {
+  const t = T[p.pos]; r.phase = 'act'; r.pending = null;
+  switch (t.type) {
+    case 'city': {
+      const o = r.own[p.pos];
+      if (!o) { if (p.cash >= t.price) { r.pending = { type: 'buy', tile: p.pos }; return; } log(r, `${p.name}은(는) 자금이 부족해 ${t.name}을(를) 살 수 없습니다.`); return settle(r); }
+      if (o.o === p.id) return settle(r);
+      const ow = byId(r, o.o); let v = tollOf(r, p.pos);
+      if (ow.tollCut) { v = Math.round(v / 2); ow.tollCut = false; }
+      log(r, `${p.name} → ${ow.name}: 통행료 ${v}만 원을 지불했습니다. (${t.name})`);
+      pay(r, p, v, ow); return settle(r);
+    }
+    case 'key': case 'dmz': return drawCard(r, p);
+    case 'tension': { const e = TEVENTS[Math.floor(Math.random() * 4)]; const from = r.tension; setT(r, e[2], e[1]); r.pending = { type: 'card', icon: e[0], title: e[1], msg: `${e[1]}으로 한반도의 긴장이 높아졌습니다.`, lines: [`긴장도 +${e[2]}`], from, to: r.tension, kind: 'c' }; if (!p.alive) settle(r); return; }
+    case 'rail': r.pending = { type: 'rail' }; return;
+    case 'culture': { const g = exch(r, p, 100, false, true); p.cash += g; log(r, `🎭 ${p.name} 남북 문화교류로 ${g}만 원을 얻었습니다.`); return settle(r); }
+    case 'family': alive(r).forEach(x => x.cash += 50); log(r, '👨‍👩‍👧 이산가족 상봉! 모든 플레이어가 50만 원을 받았습니다.'); setT(r, -1, '이산가족 상봉'); return settle(r);
+    case 'sports': { const g = exch(r, p, 100, false, true); p.cash += g; p.extra = true; log(r, `⚽ ${p.name} 남북 스포츠 교류로 ${g}만 원을 얻고 한 번 더 굴립니다.`); return settle(r); }
+    case 'pmj': log(r, `🤝 ${p.name}이(가) 판문점에 도착했습니다. 원하는 플레이어에게 거래를 제안할 수 있습니다.`); p.tradeBan = false; return settle(r);
+    default: return settle(r);
+  }
+}
+function drawCard(r, p) {
+  if (!r.deck.length) r.deck = shuffle([...Array(30).keys()]);
+  const c = C[r.deck.pop()], from = r.tension, lines = [];
+  if (c.f === 'tollCut') p.tollCut = true; if (c.f === 'skip') p.skip = true; if (c.f === 'exVoid') p.exVoid = true;
+  if (c.f === 'exHalf') p.exHalf = true; if (c.f === 'tradeBan') p.tradeBan = true; if (c.f === 'dice2') p.dice2 = true; if (c.f === 'tradeOk') p.tradeBan = false;
+  if (c.d) lines.push(c.d);
+  if (c.pay) { lines.push(`-${c.pay}만 원`); pay(r, p, c.pay); }
+  if (c.all) { lines.push(`모든 플레이어 -${c.all}만 원`); alive(r).forEach(x => pay(r, x, c.all)); }
+  if (c.gain) { const g = exch(r, p, c.gain, true, false); lines.push(`+${g}만 원`); p.cash += g; }
+  if (c.again) p.extra = true;
+  log(r, `🔑 ${p.name}: ${c.n}`);
+  if (c.t) { lines.push(`긴장도 ${c.t > 0 ? '+' : ''}${c.t}`); setT(r, c.t, c.n); }
+  const msg = c.t > 0 ? `${c.n}으로 한반도의 긴장이 높아졌습니다.` : c.k === 'c' ? `${c.n}의 여파가 이어집니다.` : `${c.n}으로 대화와 교류의 온기가 더해졌습니다.`;
+  r.pending = { type: 'card', icon: c.i, title: c.n, msg, lines, from, to: r.tension, kind: c.k, next: c.mv || null };
+  if (!p.alive) settle(r); // 카드 효과로 파산하면 바로 다음 차례로
+}
+function startGame(r) {
+  r.status = 'playing'; r.paused = false; r.turn = 0; r.phase = 'roll'; r.left = r.total = GAME_SEC; r.own = Array(40).fill(null); r.tension = 2; r.maxT = 2;
+  r.deck = shuffle([...Array(30).keys()]); r.pending = null; r.trade = null; r.results = null;
+  r.tHist = [{ t: 2, why: '시작', at: Date.now() }];
+  r.players.forEach(p => Object.assign(p, { cash: 5000, pos: 0, alive: true, ready: false, skip: false, extra: false, tollCut: false, exVoid: false, exHalf: false, dice2: false, tradeBan: false, reflected: false }));
+  log(r, `🎲 게임 시작! 시작 자금 5,000만 원. ${cur(r).name}의 차례입니다.`);
+}
+
+// ───────── 행동 처리 ─────────
+const ERR = m => ({ error: m });
+function act(b) {
+  const r = rooms[b.room]; if (!r) return ERR('없는 방입니다.');
+  const type = String(b.type || '');
+  if (type.startsWith('t_')) return teacher(r, type, b);
+  if (type === 'join') {
+    const name = String(b.name || '').trim().slice(0, 8); if (!name) return ERR('닉네임을 입력하세요.');
+    const ex = r.players.find(p => p.name === name);
+    if (ex) { if (ex.conn > 0) return ERR('이미 사용 중인 닉네임입니다.'); return { token: ex.token, pid: ex.id }; }
+    if (r.status !== 'lobby') return ERR('이미 게임이 시작된 방입니다.');
+    if (r.players.length >= 6) return ERR('방이 가득 찼습니다.');
+    const used = r.players.map(p => p.ci), ci = [0, 1, 2, 3, 4, 5].find(x => !used.includes(x));
+    const p = { id: r.nid++, name, ci, color: COLORS[ci][0], cname: COLORS[ci][1], token: crypto.randomBytes(8).toString('hex'), ready: false, cash: 5000, pos: 0, alive: true, conn: 0 };
+    r.players.push(p); log(r, `${name}이(가) 입장했습니다.`); return { token: p.token, pid: p.id };
+  }
+  const p = r.players.find(x => x.token === b.token); if (!p) return ERR('접속 정보가 없습니다. 다시 입장해 주세요.');
+  if (r.status === 'lobby') {
+    if (type === 'ready') { p.ready = !p.ready; return { ok: 1 }; }
+    if (type === 'leave') { r.players = r.players.filter(x => x !== p); log(r, `${p.name}이(가) 나갔습니다.`); return { ok: 1 }; }
+    if (type === 'start') { if (r.players.length < 2) return ERR('2명 이상이 필요합니다.'); if (!r.players.every(x => x.ready)) return ERR('모든 플레이어가 준비해야 합니다.'); startGame(r); return { ok: 1 }; }
+    return ERR('대기실에서는 할 수 없습니다.');
+  }
+  if (type === 'reflect') { if (r.status !== 'ended' || p.reflected) return ERR('제출할 수 없습니다.'); fs.mkdirSync(DATA, { recursive: true }); fs.appendFileSync(path.join(DATA, 'reflections.jsonl'), JSON.stringify({ room: r.id, name: p.name, at: new Date().toISOString(), a: [b.a1, b.a2, b.a3].map(s => String(s || '').slice(0, 300)) }) + '\n'); p.reflected = true; return { ok: 1 }; }
+  if (r.status !== 'playing') return ERR('게임이 진행 중이 아닙니다.');
+  if (r.paused) return ERR('교사가 게임을 일시정지했습니다.');
+  if (!p.alive) return ERR('파산한 플레이어입니다.');
+  const cp = cur(r), mine = p === cp, pd = r.pending;
+  const lock = i => r.trade && r.trade.tile === i;
+  switch (type) {
+    case 'roll': {
+      if (!mine || r.phase !== 'roll') return ERR('지금은 굴릴 수 없습니다.');
+      const a = 1 + Math.floor(Math.random() * 6), c = 1 + Math.floor(Math.random() * 6); let s = a + c, note = '';
+      if (p.dice2) { s = Math.max(1, s - 2); p.dice2 = false; note = ' (-2 적용)'; }
+      r.dice = { a, b: c, seq: r.dice.seq + 1 }; log(r, `🎲 ${p.name}: ${a} + ${c} = ${a + c}${note} → ${s}칸 이동`);
+      r.phase = 'act';
+      for (let k = 0; k < s; k++) { p.pos = (p.pos + 1) % 40; if (p.pos === 0) { p.cash += 300; log(r, `🏁 ${p.name} 출발점! 300만 원을 받았습니다.`); } }
+      land(r, p); return { ok: 1 };
+    }
+    case 'buy': case 'decline': {
+      if (!mine || !pd || pd.type !== 'buy') return ERR('구매할 수 없습니다.');
+      const i = pd.tile, t = T[i];
+      if (r.own[i]) return ERR('이미 팔린 지역입니다.');
+      if (type === 'buy') { if (p.cash < t.price) return ERR('돈이 부족합니다.'); p.cash -= t.price; r.own[i] = { o: p.id, lv: 0 }; log(r, `🏠 ${p.name}이(가) ${t.name}을(를) ${t.price}만 원에 구매했습니다.`); } else log(r, `${p.name}은(는) ${t.name} 구매를 포기했습니다.`);
+      settle(r); return { ok: 1 };
+    }
+    case 'ack': {
+      if (!mine || !pd || pd.type !== 'card') return ERR('확인할 카드가 없습니다.');
+      if (pd.next) r.pending = { type: 'choose', mode: pd.next }; else settle(r); return { ok: 1 };
+    }
+    case 'rail': {
+      if (!mine || !pd || pd.type !== 'rail') return ERR('철도 칸이 아닙니다.');
+      if (b.choice === 'ticket') { p.freeRail = (p.freeRail || 0) + 1; log(r, `🚆 ${p.name}이(가) 무료 이동권을 얻었습니다.`); settle(r); return { ok: 1 }; }
+      if (p.freeRail > 0) { p.freeRail--; log(r, `🚆 ${p.name}이(가) 무료 이동권을 사용합니다.`); } else { if (p.cash < 100) return ERR('100만 원이 필요합니다.'); p.cash -= 100; log(r, `🚆 ${p.name}이(가) 100만 원을 내고 이동합니다.`); }
+      r.pending = { type: 'choose', mode: 'rail' }; return { ok: 1 };
+    }
+    case 'choose': {
+      if (!mine || !pd || pd.type !== 'choose') return ERR('선택할 수 없습니다.');
+      const i = +b.tile; if (!(i >= 0 && i < 40)) return ERR('잘못된 칸입니다.');
+      if (pd.mode === 'double') { const o = r.own[i]; if (!o || o.o !== p.id) return ERR('자신의 지역을 선택하세요.'); o.x2 = true; log(r, `📈 ${p.name}의 ${T[i].name} 다음 통행료가 2배가 됩니다.`); settle(r); return { ok: 1 }; }
+      if (i === p.pos) return ERR('다른 지역을 선택하세요.');
+      log(r, `${p.name}이(가) ${T[i].name}(으)로 이동합니다.`); moveTo(r, p, i); return { ok: 1 };
+    }
+    case 'build': {
+      if (!mine || !['roll', 'after'].includes(r.phase)) return ERR('내 차례에만 건설할 수 있습니다.');
+      const i = +b.tile, o = r.own[i]; if (!o || o.o !== p.id) return ERR('내 지역이 아닙니다.'); if (o.lv >= 4) return ERR('이미 랜드마크입니다.'); if (lock(i)) return ERR('거래 중인 지역입니다.');
+      const cost = T[i].bc[o.lv]; if (p.cash < cost) return ERR('돈이 부족합니다.');
+      p.cash -= cost; o.lv++; log(r, `🏗 ${p.name}이(가) ${T[i].name}에 ${o.lv === 4 ? '랜드마크' : '건물 ' + o.lv}을(를) 건설했습니다. (-${cost}만 원)`); return { ok: 1 };
+    }
+    case 'endTurn': {
+      if (!mine || r.phase !== 'after') return ERR('아직 차례를 끝낼 수 없습니다.');
+      if (r.left <= 0) { finish(r, '제한 시간이 끝났습니다.'); return { ok: 1 }; }
+      if (p.extra) { p.extra = false; r.phase = 'roll'; log(r, `🎲 ${p.name}이(가) 한 번 더 굴립니다!`); } else { nextTurn(r); log(r, `▶ ${cur(r).name}의 차례입니다.`); }
+      return { ok: 1 };
+    }
+    case 'tradeOffer': {
+      const i = +b.tile, to = byId(r, +b.to), price = Math.floor(+b.price);
+      if (r.trade) return ERR('진행 중인 거래가 있습니다.'); if (!r.own[i] || r.own[i].o !== p.id) return ERR('내 지역이 아닙니다.');
+      if (!to || !to.alive || to === p) return ERR('상대를 선택하세요.'); if (!(price >= 0 && price <= 100000)) return ERR('가격을 확인하세요.');
+      if (p.tradeBan || to.tradeBan) return ERR('연락이 중단되어 거래할 수 없습니다.');
+      r.trade = { from: p.id, to: to.id, tile: i, price }; log(r, `🤝 ${p.name} → ${to.name}: ${T[i].name} 거래 제안 (${price}만 원)`); return { ok: 1 };
+    }
+    case 'tradeAccept': {
+      const tr = r.trade; if (!tr || tr.to !== p.id) return ERR('수락할 거래가 없습니다.');
+      const f = byId(r, tr.from), o = r.own[tr.tile];
+      if (!f || !f.alive || !o || o.o !== f.id) { r.trade = null; return ERR('거래가 성립할 수 없습니다.'); }
+      if (p.cash < tr.price) return ERR('돈이 부족합니다.');
+      p.cash -= tr.price; f.cash += tr.price; o.o = p.id; r.trade = null; log(r, `✅ 거래 성사! ${f.name} → ${p.name}: ${T[tr.tile].name} (${tr.price}만 원)`); return { ok: 1 };
+    }
+    case 'tradeReject': case 'tradeCancel': {
+      const tr = r.trade; if (!tr || (type === 'tradeReject' ? tr.to : tr.from) !== p.id) return ERR('처리할 거래가 없습니다.');
+      r.trade = null; log(r, `❎ 거래가 ${type === 'tradeReject' ? '거절' : '취소'}되었습니다.`); return { ok: 1 };
+    }
+  }
+  return ERR('알 수 없는 행동입니다.');
+}
+function teacher(r, type, b) {
+  if (b.pw !== PW) return ERR('비밀번호가 틀렸습니다.');
+  switch (type) {
+    case 't_start': if (r.status !== 'lobby' || r.players.length < 2) return ERR('대기실에 2명 이상 있어야 시작할 수 있습니다.'); startGame(r); break;
+    case 't_pause': r.paused = true; log(r, '⏸ 교사가 게임을 일시정지했습니다.'); break;
+    case 't_resume': r.paused = false; log(r, '▶ 게임이 재개되었습니다.'); break;
+    case 't_end': if (r.status === 'playing') finish(r, '교사가 게임을 종료했습니다.'); break;
+    case 't_plus5': r.left += 300; r.total += 300; log(r, '⏱ 교사가 시간을 5분 늘렸습니다.'); break;
+    case 't_reset': rooms[r.id] = newRoom(r.id); r = rooms[r.id]; break;
+    default: return ERR('알 수 없는 명령입니다.');
+  }
+  push(r); return { ok: 1 };
+}
+
+function view(r, t) {
+  const o = { ...r, deck: undefined, tHist: t ? r.tHist : undefined, players: r.players.map(p => { const q = { ...p, token: undefined, online: p.conn > 0, conn: undefined }; if (t) q.assets = Math.round(assets(r, p)); return q; }) };
+  return o;
+}
+
+let hook=()=>{};
+function push(r){dirty=true;hook(r)}
+setInterval(()=>{for(const r of Object.values(rooms))if(r.status==='playing'&&!r.paused){r.left--;if(r.left<=0&&r.phase==='roll')finish(r,'제한 시간이 끝났습니다.');push(r)}},1000);
+setInterval(()=>{if(!dirty)return;dirty=false;try{localStorage.setItem('kb_rooms',JSON.stringify(rooms))}catch(e){}},3000);
+window.ENG={act,rooms,view,T,COLORS,push:id=>push(rooms[id]),setHook:f=>{hook=f},reset:id=>{rooms[id]=newRoom(id);dirty=true}};
+})();
+</script>
+<script>
+const $=s=>document.querySelector(s);const fmt=n=>n.toLocaleString('ko-KR')+'만 원';
+const LV={};let B,S=null,ME=null,es=null,shown={},anim={},lastSeq=0,rolling=0,warned={},built=false;
+const SFX=(()=>{let ctx,muted=localStorage.getItem('mute')==='1',bg=null,nb;
+const c=()=>{if(!ctx)ctx=new(window.AudioContext||window.webkitAudioContext)();if(ctx.state==='suspended')ctx.resume();return ctx};
+function tone(f,t,d,type='sine',v=.12,f2){const a=c(),o=a.createOscillator(),g=a.createGain(),T=a.currentTime+t;o.type=type;o.frequency.setValueAtTime(f,T);if(f2)o.frequency.exponentialRampToValueAtTime(f2,T+d);g.gain.setValueAtTime(v,T);g.gain.exponentialRampToValueAtTime(.001,T+d);o.connect(g).connect(a.destination);o.start(T);o.stop(T+d+.03)}
+function click(t,d=.04,v=.15){const a=c();if(!nb){nb=a.createBuffer(1,a.sampleRate*.1,a.sampleRate);const x=nb.getChannelData(0);for(let i=0;i<x.length;i++)x[i]=Math.random()*2-1}
+ const s=a.createBufferSource(),g=a.createGain(),T=a.currentTime+t;s.buffer=nb;g.gain.setValueAtTime(v,T);g.gain.exponentialRampToValueAtTime(.001,T+d);s.connect(g).connect(a.destination);s.start(T);s.stop(T+d)}
+const seq=(n,d=.11,type='triangle',v=.12)=>n.forEach((f,i)=>tone(f,i*d,d*1.6,type,v));
+const S={
+ dice(){for(let i=0;i<9;i++)click(i*.065,.035,.14);tone(160,.6,.12,'sine',.2,80)},
+ step(){tone(700,0,.05,'triangle',.07)},
+ coin(){tone(988,0,.07,'square',.08);tone(1319,.07,.2,'square',.08)},
+ pay(){tone(360,0,.18,'sawtooth',.07,170)},
+ buy(){seq([523,659,784,1047],.09)},
+ build(){click(0,.05,.25);click(.18,.05,.25);click(.36,.05,.25);tone(140,0,.1,'sine',.2);tone(140,.18,.1,'sine',.2);tone(140,.36,.1,'sine',.2);seq([784,988,1319],.1)},
+ good(){seq([784,988,1319,1568],.1,'triangle',.13)},
+ bad(){tone(392,0,.3,'sawtooth',.09,300);tone(294,.28,.45,'sawtooth',.09,150)},
+ tup(){tone(500,0,.4,'sawtooth',.07,900);tone(500,.45,.4,'sawtooth',.07,900)},
+ tdown(){seq([880,740,587,523],.14,'sine',.1)},
+ turn(){tone(880,0,.15,'sine',.15);tone(1175,.15,.3,'sine',.15)},
+ ping(){tone(1200,0,.08,'sine',.12);tone(1200,.14,.08,'sine',.12)},
+ bankrupt(){tone(320,0,.9,'sawtooth',.1,70)},
+ win(){seq([523,523,523,659,784,659,784,1047],.16,'triangle',.14)},
+ alarm(){[0,.25,.5].forEach(t=>tone(880,t,.15,'square',.08))}};
+const N=[262,294,330,392,440,523];
+function bgmStart(){if(bg)return;let i=0,p=2;bg=setInterval(()=>{if(muted)return;p=Math.max(0,Math.min(5,p+[-1,0,1,1,-1,2,-2][Math.floor(Math.random()*7)]));tone(N[p],0,.4,'triangle',.035);if(i%4===0)tone(N[[0,2,3,1][(i/4)%4|0]]/2,0,.9,'sine',.05);i++},430)}
+return{play(n){if(muted)return;try{S[n]()}catch(e){}},unlock(){try{c()}catch(e){}},muted:()=>muted,
+ toggle(){muted=!muted;localStorage.setItem('mute',muted?'1':'0')},isBgm:()=>!!bg,
+ bgm(){if(bg){clearInterval(bg);bg=null}else{muted=false;localStorage.setItem('mute','0');bgmStart()}}}})();
+document.addEventListener('pointerdown',()=>SFX.unlock());
+function sfxDiff(p,d){if(!p||p.id!==d.id)return;const m=d.players.find(x=>x.id===ME.pid),pm=p.players.find(x=>x.id===ME.pid);
+ if(d.status==='ended'&&p.status!=='ended')return SFX.play('win');
+ if(d.status!=='playing'||p.status!=='playing')return;
+ if(d.players.some((x,i)=>p.players[i]&&p.players[i].alive&&!x.alive))SFX.play('bankrupt');
+ let built=false,bought=false;d.own.forEach((o,i)=>{const q=p.own[i];if(o&&!q)bought=true;if(o&&q&&o.lv>q.lv)built=true});
+ const dp=d.pending,pp=p.pending;
+ if(dp&&dp.type==='card'&&!(pp&&pp.type==='card'&&pp.title===dp.title&&pp.from===dp.from))SFX.play(dp.kind==='c'?'bad':'good');
+ else if(built)SFX.play('build');else if(bought)SFX.play('buy');
+ else if(m&&pm&&m.cash!==pm.cash&&d.dice.seq===p.dice.seq)SFX.play(m.cash>pm.cash?'coin':'pay');
+ else if(m&&pm&&m.cash!==pm.cash)setTimeout(()=>SFX.play(m.cash>pm.cash?'coin':'pay'),1500);
+ if(d.tension>p.tension)SFX.play('tup');else if(d.tension<p.tension)SFX.play('tdown');
+ if(d.trade&&!p.trade&&d.trade.to===ME.pid)SFX.play('ping');
+ const cu=d.players[d.turn];if(cu&&cu.id===ME.pid&&(p.turn!==d.turn||(p.phase!=='roll'&&d.phase==='roll')))setTimeout(()=>SFX.play('turn'),1200)}
+const esc=s=>String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+function toast(m){const t=$('#toast');t.textContent=m;t.classList.remove('hide');clearTimeout(toast.h);toast.h=setTimeout(()=>t.classList.add('hide'),2600)}
+async function post(b){const room=b.room||(ME&&ME.room);if(!room)return{error:'x'};let token=b.token;
+ if(!token&&b.type!=='join'){const p=ENG.rooms[room].players.find(x=>x.id===ME.pid);token=p&&p.token}
+ const out=ENG.act({...b,room,token});if(out.error)toast(out.error);else ENG.push(room);return out}
+const act=(type,x={})=>post({type,...x});
+function syncMe(){if(!S||!ME)return;if(S.status==='playing'){const tr=S.trade;ME.pid=tr?tr.to:S.players[S.turn].id}else if(S.status==='ended'){ME.pid=(S.players.find(x=>!x.reflected)||S.players[0]).id}}
+ENG.setHook(r=>{if(ME&&ME.room===r.id){const pv=S;S=ENG.view(r,false);sfxDiff(pv,S);syncMe();render()}});
+function loadRooms(){if($('#home').classList.contains('hide'))return;$('#neterr').classList.add('hide');
+ $('#rooms').innerHTML=Object.values(ENG.rooms).map(r=>`<div class="roomcard"><button class="room" onclick="join(${r.id})">${r.id}번 방<small>${r.players.length} / 6명 · ${r.status==='lobby'?(r.players.length?'대기 중':'비어 있음'):r.status==='playing'?'진행 중 (이어하기)':'종료됨'}</small></button><button class="sub tiny" onclick="askReset(${r.id})" ${r.players.length||r.status!=='lobby'?'':'disabled'}>🗑 방 비우기</button></div>`).join('')}
+function join(room){const name=$('#nick').value.trim();ME={room,pid:0,name};
+ if(name){const j=ENG.act({type:'join',room,name});if(j.error)toast(j.error);else ENG.push(room)}
+ S=ENG.view(ENG.rooms[room],false);syncMe();render()}
+function connect(){}
+let PWACT=null,pwFail=0,pwLock=0;
+function askPw(title,msg,act){PWACT=act;modalKey='tile-pw';modal(`<h2>🔒 ${title}</h2><p>${msg}</p><input id="pwin" type="password" inputmode="numeric" maxlength="8" placeholder="교사 비밀번호" style="text-align:center;max-width:220px" onkeydown="if(event.key==='Enter')checkPw()"><div class="row"><button class="red" onclick="checkPw()">확인</button><button class="sub" onclick="closeModal()">취소</button></div>`);setTimeout(()=>{const e=$('#pwin');if(e)e.focus()},60)}
+function checkPw(){if(Date.now()<pwLock)return toast('잠시 후 다시 시도하세요.');const v=$('#pwin').value;
+ if(btoa(v)==='MDE5Nw=='){const a=PWACT;PWACT=null;pwFail=0;closeModal();if(a)a()}
+ else{pwFail++;$('#pwin').value='';if(pwFail>=3){pwFail=0;pwLock=Date.now()+30000;toast('3번 틀렸어요. 30초 뒤에 다시 해 주세요.')}else toast('비밀번호가 달라요.')}}
+function askReset(id){askPw(id+'번 방 비우기','교사 비밀번호를 입력하면 이 방의 게임과 참가자가 모두 사라져요.',()=>doReset(id))}
+function doReset(id){ENG.reset(id);ENG.push(id);loadRooms()}
+function askResetAll(){askPw('모든 방 비우기','교사 비밀번호를 입력하면 1~6번 방이 모두 초기화돼요.',()=>{[1,2,3,4,5,6].forEach(i=>{ENG.reset(i);ENG.push(i)});loadRooms()})}
+function askLeave(){modalKey='tile-leave';modal(`<h2>🏠 나가기</h2><p>게임을 어떻게 할까요?</p><div class="row" style="flex-direction:column"><button onclick="closeModal();leaveLocal()">⏸ 나중에 이어서 하기</button><button class="red" onclick="askPw('게임 끝내고 방 비우기','교사 비밀번호를 입력하면 이 방이 초기화돼요.',finishLocal)">🗑 게임 끝내고 방 비우기 (교사용)</button><button class="sub" onclick="closeModal()">취소</button></div>`)}
+function finishLocal(){const r=ME.room;ENG.reset(r);ENG.push(r);leaveLocal()}
+function addPlayer(){const n=$('#addn').value.trim();if(!n)return toast('닉네임을 입력하세요.');const j=ENG.act({type:'join',room:ME.room,name:n});if(j.error)return toast(j.error);ENG.push(ME.room)}
+function rmPlayer(id){const p=ENG.rooms[ME.room].players.find(x=>x.id===id);if(p){ENG.act({type:'leave',room:ME.room,token:p.token});ENG.push(ME.room)}}
+function startLocal(){const r=ENG.rooms[ME.room];r.players.forEach(p=>{if(!p.ready)ENG.act({type:'ready',room:r.id,token:p.token})});const o=ENG.act({type:'start',room:r.id,token:r.players[0].token});if(o.error)toast(o.error);else ENG.push(r.id)}
+function resetLocal(){ENG.reset(ME.room);for(const k in LV)delete LV[k];shown={};anim={};S=ENG.view(ENG.rooms[ME.room],false);modalKey='';closeModal();render()}
+function leaveLocal(){if(es)es.close();ME=null;S=null;shown={};anim={};document.querySelectorAll('.pawn').forEach(e=>e.remove());localStorage.removeItem('kb');['#lobby','#game'].forEach(s=>$(s).classList.add('hide'));$('#modal').classList.add('hide');$('#home').classList.remove('hide');loadRooms()}
+const me=()=>S.players.find(p=>p.id===ME.pid),cur=()=>S.players[S.turn],isMe=()=>cur()&&cur().id===ME.pid;
+const dc=p=>`<span class="dot" style="background:${p.color}"></span>`;
+
+function render(){
+  if(!S||!ME)return;$('#home').classList.add('hide');
+  if(S.status==='lobby'){$('#game').classList.add('hide');$('#modal').classList.add('hide');renderLobby();return}
+  $('#lobby').classList.add('hide');$('#game').classList.remove('hide');
+  if(!built)buildBoard();renderTop();renderLeft();renderRight();renderBoard();lastMsg();syncTokens();renderModal();
+}
+function renderLobby(){const L=$('#lobby');L.classList.remove('hide');
+ L.innerHTML=`<span class="stamp">대기실</span><h1>${S.id}번 방</h1><div class="subt">현재 ${S.players.length} / 6명 · 한 기기에서 돌아가며 해요</div>
+ <div class="panel plist">${S.players.map(p=>`<div class="pl">${dc(p)}<b>${esc(p.name)}</b><span style="color:#888">${p.cname||''} 말</span><button class="sub" style="margin-left:auto;padding:2px 10px" onclick="rmPlayer(${p.id})">✖</button></div>`).join('')||'<div class="pl">아직 아무도 없어요</div>'}</div>
+ <div class="row"><input id="addn" maxlength="8" placeholder="닉네임 입력" style="max-width:220px" onkeydown="if(event.key==='Enter')addPlayer()"><button onclick="addPlayer()">➕ 참가</button></div>
+ <div class="row"><button ${S.players.length>=2?'':'disabled'} onclick="startLocal()">🎲 게임 시작</button><button class="sub" onclick="leaveLocal()">처음으로</button></div>
+ <p style="color:#777;font-size:14px">2~6명이 이름을 넣고 시작하세요. 차례가 되면 기기를 옆 친구에게 넘겨요!</p>`}
+function pos(i){if(i<=10)return[11,11-i];if(i<=20)return[11-(i-10),1];if(i<=30)return[1,1+(i-20)];return[1+(i-30),11]}
+const TINT={500:'#efe0d8',700:'#d8f0ec',1000:'#dcecff',1400:'#efdcf5',1800:'#ffdcdc'};const BAND={500:'#8d6e63',700:'#26a69a',1000:'#42a5f5',1400:'#ab47bc',1800:'#ef5350'};
+const TYL={start:'출발',key:'카드',rail:'특별칸',rest:'휴식',culture:'교류',family:'교류',dmz:'카드',pmj:'거래',sports:'교류',tension:'긴장'};
+const ICON={start:'🏁',key:'🔑',rail:'🚆',rest:'☕',culture:'🎭',family:'👨‍👩‍👧',dmz:'🪖',pmj:'🤝',sports:'⚽',tension:'⚠️'};
+function buildBoard(){built=true;const b=$('#board');b.innerHTML='';
+  B.T.forEach(t=>{const[r,c]=pos(t.i),d=document.createElement('div');d.className='tile'+(t.type!=='city'?' sp':'');d.id='t'+t.i;if(t.type==='city')d.style.background=TINT[t.price];d.style.gridArea=`${r}/${c}`;
+   d.innerHTML=`${t.type==='city'?`<div class="band" style="background:${BAND[t.price]}"></div>`:''}<span class="no">${t.i+1}</span><div class="nm">${ICON[t.type]||''}${esc(t.name)}${t.tag?`<span class="tag ${t.tag==='북'?'n':'s'}">${t.tag}</span>`:''}</div><div class="ty">${t.type==='city'?'지역':TYL[t.type]}</div>${t.price?`<div class="pr">${t.price}만</div>`:''}<div class="bld"></div><div class="ow"></div><div class="tk"></div>`;
+   d.onclick=()=>tileClick(t.i);b.appendChild(d)});
+  const mid=document.createElement('div');mid.id='mid';mid.innerHTML='<div class="stamp">STAMP TOUR</div><div class="big">한반도<br>한 바퀴</div><div id="midinfo" style="margin-top:8px;font-size:14px"></div>';b.appendChild(mid)}
+function renderTop(){const t=S.tension,mood=t<=1?'🕊 평화로운 분위기 (교류 보상 +50%)':t<=3?'기본 상태':t===4?'⚠️ 긴장 고조 (특별칸 보상 -50%)':'🚨 긴급 상황';
+  const m=Math.floor(Math.max(0,S.left)/60),s=Math.max(0,S.left)%60,left=S.left;
+  let w='';if(S.status==='playing'){if(left<=60)w='🚨 마지막 1분!';else if(left<=300)w='⏰ 게임 종료까지 5분!';
+   [[300,'⏰ 게임 종료까지 5분!'],[60,'🚨 마지막 1분!']].forEach(([k,msg])=>{if(left<=k&&!warned[k]){warned[k]=1;toast(msg);SFX.play('alarm')}if(left>k)warned[k]=0})}
+  $('#top').innerHTML=`<b>🗺 한반도 한 바퀴</b><span>🕊 한반도 긴장도 <b>${t}/5</b> <small>${mood}</small></span><span>${w} ⏱ <b>${m}:${String(s).padStart(2,'0')}</b></span><span><button class="sub" onclick="SFX.toggle();render()" style="padding:2px 10px">${SFX.muted()?'🔇 소리 켜기':'🔊'}</button> <button class="sub" onclick="SFX.bgm();render()" style="padding:2px 10px">${SFX.isBgm()?'🎵 배경음 끄기':'🎵 배경음'}</button> <button class="sub" onclick="askLeave()" style="padding:2px 10px">🏠 나가기</button></span>${S.paused?'<span style="background:#f4a300;color:#000;padding:2px 10px;border-radius:8px">⏸ 일시정지</span>':''}`}
+function renderLeft(){const own=i=>S.own.map((o,k)=>o&&o.o===i?k:-1).filter(k=>k>=0);
+  $('#left').innerHTML='<b>👥 플레이어</b><div class="pcards">'+S.players.map(p=>{const ts=own(p.id),st=S.status==='playing'&&cur().id===p.id;
+   return `<div class="pcard ${st?'cur':''} ${p.alive?'':'dead'}"><div class="pn">${dc(p)} <b>${esc(p.name)}</b>${st?' 👈 차례':''}${p.online===false?' 📴':''}</div><div class="cash">💰 ${fmt(p.cash)}</div>
+   <div class="chips">${p.alive?(ts.length?ts.map(k=>{const t=B.T[k],o=S.own[k];return `<span class="chip" style="background:${TINT[t.price]}">${t.name}${['','🏠','🏘️','🏢','🏯'][o.lv]}${o.x2?'×2':''}</span>`}).join(''):'<span class="none">지역 없음</span>'):'<span class="none">파산</span>'}</div>
+   <div class="st">${p.skip?'🧊 이번 차례 쉼 ':''}${p.tradeBan?'📵 거래 불가 ':''}${p.freeRail?'🎟 무료 이동권 '+p.freeRail:''}</div></div>`}).join('')+'</div>'}
+function renderRight(){const c=cur(),m=me();let txt;
+  if(S.status==='ended')txt='🏆 게임이 끝났습니다.';else if(isMe())txt=`${dc(c)} ${esc(c.name)}의 차례입니다.${S.phase==='roll'?'<br>주사위를 굴려 주세요!':''}`;
+  else txt=`${dc(c)} ${esc(c.name)}이(가) ${S.phase==='roll'?'주사위를 굴리고 있습니다.':S.pending&&S.pending.type==='buy'?'구매를 고민하고 있습니다.':'행동하고 있습니다.'}`;
+  const mine=isMe()&&S.status==='playing'&&!S.paused&&m.alive;
+  const tr=S.trade;
+  $('#right').innerHTML=`<div id="turn">${txt}</div><div class="panel" style="text-align:center"><span class="die" id="d1">${S.dice.a}</span><span class="die" id="d2">${S.dice.b}</span>
+  <div><button id="rollb" ${mine&&S.phase==='roll'?'':'disabled'} onclick="act('roll')" style="width:100%;margin-top:6px">🎲 주사위 굴리기</button></div>
+  <div><button ${mine&&S.phase==='after'?'':'disabled'} onclick="act('endTurn')" class="sub" style="width:100%;margin-top:6px">턴 종료 ▶</button></div></div>
+  <div class="panel" style="font-size:13px">💡 지도 위 <b>내 지역을 클릭</b>하면 건설·거래할 수 있어요. 지역을 클릭하면 통행료표도 볼 수 있어요.${S.pending&&S.pending.type==='choose'&&mine?'<br><b style="color:#c0392b">👉 이동(선택)할 지역을 보드에서 클릭하세요!</b>':''}</div>
+  ${tr&&tr.from===ME.pid?`<div class="panel">🤝 거래 제안 대기 중...<br><button class="sub" onclick="act('tradeCancel')">취소</button></div>`:''}`;
+  if(S.dice.seq!==lastSeq){const first=lastSeq===0;lastSeq=S.dice.seq;if(!first){rolling=1;SFX.play('dice');['#d1','#d2'].forEach(s=>$(s).classList.add('roll'));const iv=setInterval(()=>{$('#d1').textContent=1+Math.floor(Math.random()*6);$('#d2').textContent=1+Math.floor(Math.random()*6)},80);setTimeout(()=>{clearInterval(iv);rolling=0;render()},650)}}
+  if(rolling){['#d1','#d2'].forEach(s=>$(s)&&$(s).classList.add('roll'))}}
+function renderBoard(){setTimeout(()=>{LV.init=1},0);B.T.forEach(t=>{const d=$('#t'+t.i),o=S.own[t.i],ow=d.querySelector('.ow');
+   {const bl=d.querySelector('.bld'),lv=o?o.lv:0,pl=LV[t.i]||0;bl.textContent=['','🏠','🏘️','🏢','🏯'][lv];bl.classList.toggle('land',lv===4);d.classList.toggle('built',lv>0);
+    if(lv>pl&&LV.init){bl.classList.remove('pop');void bl.offsetWidth;bl.classList.add('pop')}LV[t.i]=lv}
+   if(o){const p=S.players.find(x=>x.id===o.o);ow.style.background=p?p.color:'#999';ow.textContent=`${p?esc(p.name):''} ${o.x2?'×2':''}`}else{ow.style.background='none';ow.textContent=''}
+   const c=S.status==='playing'&&cur()&&cur().pos===t.i;d.classList.toggle('cur',c);
+   d.classList.toggle('pick',!!(S.pending&&S.pending.type==='choose'&&isMe()&&(S.pending.mode==='double'?o&&o.o===ME.pid:true)))});
+  const c=cur(),t=c&&c.pos>=0?B.T[c.pos]:null;$('#midinfo').innerHTML=S.trade?`🤝 거래 제안: ${esc(S.players.find(p=>p.id===S.trade.from).name)} → ${esc(S.players.find(p=>p.id===S.trade.to).name)} (${B.T[S.trade.tile].name}, ${S.trade.price}만 원)`:t?`현재 위치: <b>${t.name}</b>`:''}
+function syncTokens(){S.players.forEach(p=>{if(shown[p.id]===undefined||p.pos<0){shown[p.id]=p.pos}else if(shown[p.id]!==p.pos&&!anim[p.id])step(p.id)});drawTokens()}
+function step(id){anim[id]=1;const go=()=>{if(rolling){setTimeout(go,100);return}const p=S&&S.players.find(x=>x.id===id);if(!p||p.pos<0||shown[id]===p.pos){anim[id]=0;drawTokens();if(!Object.values(anim).some(Boolean))renderModal();return}
+  if((p.pos-shown[id]+40)%40>14)shown[id]=p.pos;else shown[id]=(shown[id]+1)%40;drawTokens(id);SFX.play('step');setTimeout(go,150)};go()}
+function drawTokens(hopId){const b=$('#board');if(!b||!S)return;
+  document.querySelectorAll('.pawn').forEach(e=>{if(!S.players.some(p=>'pw'+p.id===e.id&&p.alive))e.remove()});
+  S.players.forEach(p=>{const at=shown[p.id];let e=$('#pw'+p.id);if(!p.alive||at===undefined||at<0)return;
+   const t=$('#t'+at);if(!t)return;if(!e){e=document.createElement('div');e.id='pw'+p.id;e.className='pawn';b.appendChild(e)}
+   const same=S.players.filter(q=>q.alive&&shown[q.id]===at),k=same.findIndex(q=>q.id===p.id),sz=t.offsetWidth*.34,fs=parseFloat(getComputedStyle(t).fontSize);
+   e.style.background=p.color;e.textContent=p.name.slice(0,1);e.style.width=e.style.height=sz+'px';e.style.fontSize=sz*.55+'px';
+   e.style.left=(t.offsetLeft+t.offsetWidth*.06+(k%3)*sz*.95)+'px';e.style.top=(t.offsetTop+t.offsetHeight-sz-fs*1.8-Math.floor(k/3)*sz*.95)+'px';
+   if(hopId===p.id){e.classList.remove('hop');void e.offsetWidth;e.classList.add('hop')}});}
+window.addEventListener('resize',()=>{if(S&&built)drawTokens()});
+function lastMsg(){const m=S.log[S.log.length-1];if(m)$('#midinfo').innerHTML+=`<div class="lastmsg">${esc(m.m)}</div>`}
+function renderLog(){const l=$('#logp');const atBottom=l.scrollTop+l.clientHeight>=l.scrollHeight-30;l.innerHTML='<b>📜 게임 로그</b>'+S.log.map(x=>`<div>${esc(x.m)}</div>`).join('');if(atBottom)l.scrollTop=l.scrollHeight}
+function modal(html,cls=''){const m=$('#modal');m.classList.remove('hide');m.innerHTML=`<div class="mbox ${cls}">${html}</div>`}
+const closeModal=()=>{$('#modal').classList.add('hide');$('#modal').innerHTML='';modalKey=''};let modalKey='';
+function renderModal(){if(!S||S.status==='lobby')return;
+  const moving=Object.values(anim).some(Boolean)||rolling;let key,fn;const pd=S.pending,m=me();
+  if(S.status==='ended'){if(modalKey==='tile-pw')return;key='end'+m.id+(m.reflected?1:0)+JSON.stringify(S.results);if(modalKey===key)return;modalKey=key;return endModal()}
+  if(moving)return;
+  if(S.paused){key='paused';if(modalKey!==key){modalKey=key;modal('<h2>⏸ 일시정지</h2><p>교사가 게임을 잠시 멈췄어요.</p>')}return}
+  const tr=S.trade;
+  if(tr&&tr.to===ME.pid){key='trade'+JSON.stringify(tr);if(modalKey===key)return;modalKey=key;const f=S.players.find(p=>p.id===tr.from);return modal(`<h2>🤝 거래 제안</h2><p><b>${esc(f.name)}</b>이(가) <b>${B.T[tr.tile].name}</b>을(를)<br><b>${fmt(tr.price)}</b>에 팔겠다고 제안했어요.<br><small>내 돈: ${fmt(m.cash)}</small></p><div class="row"><button onclick="act('tradeAccept')">수락</button><button class="sub" onclick="act('tradeReject')">거절</button></div>`)}
+  if(pd&&pd.type==='card'){key='card'+(S.log.length?S.log[S.log.length-1].at:0);if(modalKey===key)return;modalKey=key;const ok=isMe();
+    return modal(`<div style="font-size:70px">${pd.icon}</div><h2>${pd.title}</h2><p>"${pd.msg}"</p>${pd.lines.map(l=>`<div style="font-weight:800;font-size:18px">${l}</div>`).join('')}<div style="margin:10px 0">🕊 긴장도 ${pd.from}/5 → <b>${pd.to}/5</b></div>${ok?'<button onclick="act(\'ack\')">확인</button>':'<small>카드 확인 중...</small>'}`,'card '+pd.kind)}
+  if(pd&&pd.type==='buy'&&isMe()){key='buy'+pd.tile;if(modalKey===key)return;modalKey=key;const t=B.T[pd.tile];
+    return modal(`<h2>${t.name} <span class="tag ${t.tag==='북'?'n':'s'}">${t.tag}</span></h2><p>구매가: <b>${fmt(t.price)}</b> · 기본 통행료 ${t.tl[0]}만 원</p><p style="background:#fff;padding:10px;border-radius:10px">${t.info}</p><div class="row"><button onclick="act('buy')">구매하기</button><button class="sub" onclick="act('decline')">구매하지 않기</button></div>`)}
+  if(pd&&pd.type==='rail'&&isMe()){key='rail'+(S.log.length?S.log[S.log.length-1].at:0);if(modalKey===key)return;modalKey=key;
+    return modal(`<h2>🚆 남북 철도</h2><p>어떻게 할까요?</p><div class="row" style="flex-direction:column"><button onclick="act('rail',{choice:'pay'})">${me().freeRail?'무료 이동권 사용하고 이동':'100만 원 내고 원하는 지역으로 이동'}</button><button class="sub" onclick="act('rail',{choice:'ticket'})">무료 이동권 획득 (다음 철도 이용 때 사용)</button></div>`)}
+  if(pd&&pd.type==='choose'&&isMe()){key='choose'+pd.mode+(S.log.length?S.log[S.log.length-1].at:0);if(modalKey!==key){modalKey=key;toast(pd.mode==='double'?'통행료를 2배로 만들 내 지역을 클릭하세요':'이동할 지역을 클릭하세요')}$('#modal').classList.add('hide');return}
+  if(modalKey&&!modalKey.startsWith('tile')){closeModal()}
+}
+function tileClick(i){if(!S||S.status!=='playing')return;const pd=S.pending;
+  if(pd&&pd.type==='choose'&&isMe()){return act('choose',{tile:i})}
+  const t=B.T[i],o=S.own[i];const owner=o&&S.players.find(p=>p.id===o.o);let h=`<h2>${ICON[t.type]||''} ${t.name} <small>#${i+1}</small></h2>`;
+  if(t.type!=='city'){h+=`<p>${TYL[t.type]} 칸</p>`}else{
+   h+=`<p>${t.price}만 원 · ${t.tag==='북'?'북한':'남한'} 지역<br><small>${t.info}</small></p><table class="tbl"><tr><th>단계</th><th>건설비</th><th>통행료</th></tr>${['기본','건물1','건물2','건물3','랜드마크'].map((n,k)=>`<tr ${o&&o.lv===k?'style="background:#fff3c4"':''}><td>${n}</td><td>${k?t.bc[k-1]+'만':'-'}</td><td>${t.tl[k]}만</td></tr>`).join('')}</table><p>소유자: ${owner?dc(owner)+esc(owner.name):'없음'}</p>`;
+   const m=me();
+   if(owner&&owner.id===ME.pid&&m.alive){const can=isMe()&&['roll','after'].includes(S.phase)&&!S.paused&&o.lv<4;
+     h+=`<div class="row"><button ${can?'':'disabled'} onclick="act('build',{tile:${i}}).then(closeModal)">${o.lv>=4?'최대 단계':'🏗 건설 ('+t.bc[o.lv]+'만 원)'}</button></div>
+     <hr><b>거래 제안</b><select id="trTo">${S.players.filter(p=>p.alive&&p.id!==ME.pid).map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join('')}</select><input id="trP" type="number" min="0" placeholder="판매 가격 (만 원)" style="margin-top:6px"><div class="row"><button onclick="act('tradeOffer',{tile:${i},to:$('#trTo').value,price:$('#trP').value}).then(j=>{if(!j.error)closeModal()})">제안하기</button></div>`}}
+  h+=`<div class="row"><button class="sub" onclick="closeModal()">닫기</button></div>`;modalKey='tile'+i;modal(h)}
+function endModal(){const R=S.results,mx=Math.max(...R.map(r=>r.tiles)),m=me(),med=['🥇','🥈','🥉'];
+  modal(`<h2>🏆 한반도 한 바퀴 완료!</h2><table class="tbl">${R.map((r,i)=>`<tr><td>${med[i]||i+1}</td><td>${dc(r)} ${esc(r.name)}${r.alive?'':' (파산)'}</td><td>${fmt(r.total)}</td><td>🏠${r.tiles}</td></tr>`).join('')}</table>
+  <p>가장 많이 보유한 지역 수: <b>${mx}곳</b> (${R.filter(r=>r.tiles===mx).map(r=>esc(r.name)).join(', ')})<br>게임 중 긴장도 최고점: <b>${S.maxT}/5</b></p><hr>
+  ${m.reflected?'<p><b>응답이 저장되었습니다.</b></p>':`<div style="text-align:left"><h3>✏️ ${esc(m.name)}의 성찰</h3><b>1. 가장 기억에 남은 지역은 어디였나요?</b><textarea id="a1" rows="2"></textarea><b>2. 게임을 하면서 새롭게 알게 된 북한의 모습은 무엇인가요?</b><textarea id="a2" rows="2"></textarea><b>3. 한반도의 긴장이 높아졌을 때 게임에 어떤 변화가 생겼나요?</b><textarea id="a3" rows="2"></textarea></div><div class="row"><button onclick="act('reflect',{a1:$('#a1').value,a2:$('#a2').value,a3:$('#a3').value})">제출하기</button></div>`}
+  <div class="row"><button onclick="askPw('새 게임','교사 비밀번호를 입력하면 이 방이 새 게임으로 초기화돼요.',resetLocal)">🔄 새 게임 (교사용)</button><button class="sub" onclick="askPw('방 비우기','교사 비밀번호를 입력하면 이 방이 초기화돼요.',finishLocal)">처음으로 (방 비우기)</button></div>`)}
+window.addEventListener('keydown',e=>{if(e.key==='Escape'&&modalKey.startsWith('tile'))closeModal()});
+B={T:ENG.T,COLORS:ENG.COLORS};loadRooms();setInterval(loadRooms,2500);</script></body></html>
+<style>#board,#top,.panel,.room,button,.mbox,#turn,.pcard,.stamp,.die{filter:url(#rough)}</style>
